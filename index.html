@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="theme-color" content="#140c10"/>
+<title>kk · saelion.co</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#140c10;color:#f3e6d4;font-family:Georgia,serif}body{padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}main{max-width:900px;margin:auto}h1{font-weight:400;font-size:clamp(32px,6vw,56px);margin:8px 0}h2{font-weight:400}p{line-height:1.5}button,a{font:inherit}button,.link{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid #3ecfcf;background:#140c10;color:#f3e6d4;padding:12px 20px;border-radius:28px;cursor:pointer}a{color:#3ecfcf}button:hover,.link:hover{background:#34202a}:focus-visible{outline:3px solid #e4c27a;outline-offset:4px}[hidden]{display:none!important}.meta{letter-spacing:.14em;text-transform:uppercase;font:12px system-ui,sans-serif;color:#e4c27a}.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}#welcome{max-width:620px;padding:4vh 0}#scene{display:block;width:100%;height:clamp(200px,42vh,420px);border:1px solid #8d8794;border-radius:12px}#scene:focus-visible{outline-offset:3px}#hud{padding:8px 0}.line{font-size:clamp(24px,5vw,36px);margin:12px 0 0}#read{margin:8px 0}#controls{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}#stick{width:96px;height:96px;flex-shrink:0;border-radius:50%;border:1px solid #e4c27a;background:radial-gradient(circle,#e4c27a 0 5px,transparent 6px);touch-action:none;display:grid;place-items:center;color:#f3e6d4;font:12px system-ui,sans-serif;padding-top:52px}#act{max-width:100%}.help{font:14px/1.6 system-ui,sans-serif;color:#e4c27a}#ending{border-top:1px solid #8d8794;margin-top:24px;padding-top:8px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}footer{margin-top:24px}#storage{font-size:14px}#text-scene{padding:20px;border-left:2px solid #e4c27a;background:#24151d}
+</style>
+</head>
+<body>
+<main>
+<header><p class="meta">saelion.co · kk</p><h1>a watch, not a wall</h1></header>
+<section id="welcome" aria-label="Begin your watch">
+<p>Walk the well. Weigh. Do not take the crown.</p>
+<p>A short walk. Nothing to collect.</p>
+<p id="saved" hidden>Your watch is saved on this device.</p>
+<div class="actions"><button id="continue" hidden>Continue</button><button id="enter">Enter</button><button id="enter-text">Enter in text mode</button></div>
+</section>
+<section id="play" aria-label="The watch" hidden>
+<div class="actions"><button id="mode">Use text mode</button></div>
+<p class="help" id="help">Move with arrows, WASD, or the round pad. With the scene focused, press E or Space to act. You can also use the action button.</p>
+<canvas id="scene" tabindex="0" role="img" aria-label="A dusk courtyard: the well is to your right, a companion to your left, and the crown rests beyond the well." aria-describedby="help read"></canvas>
+<p id="text-scene" hidden>A dusk courtyard. Two vessels wait at the well. A companion stands nearby. The crown stays in its box. Use the action below to walk the same path, one step at a time.</p>
+<div id="hud"><p id="progress" class="meta"></p><h2 class="line" id="line"></h2><p id="read"></p><p id="scale"></p></div>
+<div id="controls"><div id="stick" aria-hidden="true">move</div><button id="act"></button></div>
+<section id="ending" aria-labelledby="end-title" hidden tabindex="-1"><h2 id="end-title">The way home stays open.</h2><p>The crown stays in the box. Your watch is complete.</p><div class="actions"><button id="stay">Stay a moment</button><a class="link" href="/">Return home</a></div></section>
+<p id="rest" hidden>Two vessels. One dusk. You can stay as long as you like.</p>
+<p><button id="restart">Begin again</button></p>
+</section>
+<p id="storage" hidden></p>
+<p id="announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+<footer><a href="/">Home</a></footer>
+<noscript><p>This watch needs JavaScript for its interactive steps. The crown stays in the box, and the way home stays open.</p></noscript>
+</main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const KEY='raspberry-kk';
+const steps=[
+ {line:'the water remembers.',read:'Two vessels. One dusk. Walk toward the well.',action:'Approach the well'},
+ {line:'a trace, not a trophy.',read:'Tare first. 398 is a receipt.',action:'Tare the vessel'},
+ {line:'a trace, not a trophy.',read:'Scale zeroed. The vessel is ready.',action:'Weigh the water'},
+ {line:'she notices.',read:'Gaze, no claim.',action:'Witness beside her'},
+ {line:'beside, not ahead.',read:'But not today. Sword down.',action:'Leave the crown'},
+ {line:'a living crown.',read:'Crown stays in the box.',action:'Finish the watch'},
+ {line:'a little farther.',read:'The way home stays open.',action:''}
+];
+const textRoute=new URLSearchParams(location.search).get('mode')==='text';
+let step=0,mode=textRoute?'text':'walk',playing=false;
+let saved=null,keys=new Set(),joy={x:0,y:0,id:null},lastTime=null,near=false;
+const me={x:.22,y:.55},well={x:.62,y:.48},canvas=$('scene');
+let g=null;try{g=canvas.getContext('2d')}catch{}
+if(!g)mode='text';
+const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+function valid(s){return s&&s.version===1&&Number.isInteger(s.step)&&s.step>=0&&s.step<=6&&['walk','text'].includes(s.mode)&&s.crownTaken===false}
+function storageNotice(){ $('storage').hidden=false;$('storage').textContent='Saving is unavailable. You can still complete this watch; progress lasts until you leave.'; }
+try{const raw=localStorage.getItem(KEY);if(raw){try{const s=JSON.parse(raw);if(valid(s))saved=s;else throw Error()}catch{$('storage').hidden=false;$('storage').textContent='An older or unreadable watch was found. Begin a new watch.'}}}catch{storageNotice()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({version:1,step,mode,crownTaken:false}))}catch{storageNotice()}}
+function announce(message){$('announcement').textContent=message}
+function resetInput(){keys.clear();joy={x:0,y:0,id:null};lastTime=null}
+function placeAtWell(){me.x=well.x-.08;me.y=well.y}
+function setMode(next){mode=g?next:'text';resetInput();near=false;$('scene').hidden=mode==='text';$('text-scene').hidden=mode!=='text';$('stick').hidden=mode==='text'||step===6;$('mode').textContent=mode==='text'?'Use walking mode':'Use text mode';$('mode').hidden=!g;$('help').hidden=mode==='text';if(step>0)placeAtWell();render();if(playing)save()}
+function start(resume=false,text=false){step=resume?saved.step:0;playing=true;me.x=.22;me.y=.55;$('welcome').hidden=true;$('play').hidden=false;$('rest').hidden=true;setMode(text||textRoute?'text':resume?saved.mode:mode);save();if(step===6)$('ending').focus();else if(mode==='text')$('act').focus();else canvas.focus();announce(steps[step].read)}
+if(saved){$('saved').hidden=false;$('continue').hidden=false;$('enter').textContent='Begin again';$('enter-text').textContent='Begin again in text mode'}
+$('enter').onclick=()=>start();$('enter-text').onclick=()=>start(false,true);$('continue').onclick=()=>start(true);
+$('mode').onclick=()=>{setMode(mode==='text'?'walk':'text');announce(mode==='text'?'Text mode. The same watch, one action at a time.':'Walking mode. '+steps[step].read)};
+$('restart').onclick=()=>start(false,mode==='text');
+$('stay').onclick=()=>{$('rest').hidden=false;announce($('rest').textContent)};
+function distance(){const r=canvas.getBoundingClientRect();return Math.hypot((me.x-well.x)*r.width,(me.y-well.y)*r.height)}
+function inRange(){return distance()<=90}
+function render(){const s=steps[step];$('line').textContent=s.line;$('read').textContent=s.read;$('scale').textContent=step>=3?'398 g · a receipt, not a trophy.':step===2?'0 g · scale zeroed.':'Scale not yet zeroed.';$('progress').textContent=step===6?'Watch complete':`Step ${step+1} of 6`;$('act').textContent=step===0&&mode==='walk'?'Find the well':s.action;$('controls').hidden=step===6;$('ending').hidden=step!==6;draw()}
+function advance(){if(!playing||step===6)return;if(mode==='walk'&&!inRange()){announce('Move toward the well, to the right of where you began.');$('read').textContent='Move toward the well. The vessel is waiting there.';return}step++;resetInput();save();render();announce(steps[step].read+(step===3?' 398 grams.':''));if(step===6)$('ending').focus()}
+$('act').onclick=advance;
+canvas.addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(['arrowleft','arrowright','arrowup','arrowdown','w','a','s','d','e',' '].includes(k)){e.preventDefault();if(step===6)return;if(k==='e'||k===' '){if(!e.repeat)advance()}else keys.add(k)}});
+addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));canvas.addEventListener('blur',resetInput);addEventListener('blur',resetInput);document.addEventListener('visibilitychange',resetInput);
+// Native buttons retain normal keyboard activation; suppress held-key repeats.
+document.querySelectorAll('button').forEach(button=>button.addEventListener('keydown',e=>{if(e.repeat&&(e.key==='Enter'||e.key===' '))e.preventDefault()}));
+const stick=$('stick');
+function joyAt(e){const r=stick.getBoundingClientRect(),x=(e.clientX-r.left-r.width/2)/(r.width/2),y=(e.clientY-r.top-r.height/2)/(r.height/2),m=Math.hypot(x,y);joy.x=m<.15?0:x/Math.max(1,m);joy.y=m<.15?0:y/Math.max(1,m)}
+stick.addEventListener('pointerdown',e=>{if(!playing||step===6||joy.id!==null)return;resetInput();joy.id=e.pointerId;stick.setPointerCapture(e.pointerId);joyAt(e)});
+stick.addEventListener('pointermove',e=>{if(e.pointerId===joy.id)joyAt(e)});
+for(const event of ['pointerup','pointercancel','lostpointercapture'])stick.addEventListener(event,e=>{if(e.pointerId===joy.id)resetInput()});
+function draw(){if(!g||mode==='text'||!playing)return;const r=canvas.getBoundingClientRect(),w=r.width,h=r.height;if(!w||!h)return;const dpr=Math.min(devicePixelRatio||1,2);if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr)}g.setTransform(dpr,0,0,dpr,0,0);g.fillStyle='#140c10';g.fillRect(0,0,w,h);g.fillStyle='rgba(231,160,106,.22)';g.fillRect(0,0,w*.46,h);g.fillStyle='rgba(141,29,58,.4)';g.fillRect(w*.46,0,w,h);const wx=w*well.x,wy=h*well.y,radius=Math.min(68,w*.14,h*.28);g.strokeStyle=inRange()?'#e4c27a':'#8d8794';g.lineWidth=8;g.beginPath();g.arc(wx,wy,radius,0,Math.PI*2);g.stroke();function dot(x,y,r,color){g.fillStyle=color;g.beginPath();g.arc(x,y,r,0,Math.PI*2);g.fill()}dot(wx,wy,radius-12,'#100c14');dot(w*.78,h*.22,12,'#9e6a48');dot(w*.28,h*.6,8,'#3ecfcf');dot(me.x*w+16,me.y*h+4,6,'#e4c27a');dot(me.x*w,me.y*h,14,'#d7c2a4');g.fillStyle='#f3e6d4';g.font='14px Georgia';g.textAlign='center';g.fillText('well',wx,wy+5);g.fillText('crown',w*.78,h*.22-20)}
+function loop(time){const dt=lastTime===null?0:Math.min((time-lastTime)/1000,.05);lastTime=time;if(playing&&mode==='walk'&&step<6&&!document.hidden){const r=canvas.getBoundingClientRect();let x=(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0)+joy.x,y=(keys.has('s')||keys.has('arrowdown')?1:0)-(keys.has('w')||keys.has('arrowup')?1:0)+joy.y;const m=Math.max(1,Math.hypot(x,y));if(x||y){me.x=Math.max(20/r.width,Math.min(1-20/r.width,me.x+x/m*192*dt/r.width));me.y=Math.max(20/r.height,Math.min(1-20/r.height,me.y+y/m*192*dt/r.height));draw()}const now=inRange();if(now!==near){near=now;if(near&&step===0){step=1;save();render();announce('At the well. Tare the vessel.')}else if(step<6){$('read').textContent=near?steps[step].read:'Move back toward the well to continue.';announce($('read').textContent)}}}requestAnimationFrame(loop)}
+// No decorative animation: reduced-motion users only see intentional movement.
+reduced.addEventListener('change',draw);addEventListener('resize',()=>{resetInput();draw()});requestAnimationFrame(loop);
+</script>
+</body>
+</html>

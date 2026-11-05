@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#140c10">
+  <meta name="description" content="KK is a short interactive vignette at a well at dusk. Walk through a simple scene or follow the same experience in text mode, at your own pace.">
+  <title>About KK · saelion.co</title>
+  <style>
+    * { box-sizing: border-box; }
+    html { background: #140c10; color: #f3e6d4; font-family: Georgia, serif; }
+    body { margin: 0; padding: max(24px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
+    main, footer { max-width: 850px; margin: auto; }
+    main { padding-top: clamp(16px, 7vh, 72px); }
+    .meta { color: #e4c27a; font: 12px/1.6 system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+    h1 { max-width: 15ch; font-weight: 400; font-size: clamp(36px, 7vw, 64px); line-height: 1.1; margin: 20px 0; }
+    h2 { font-size: 24px; font-weight: 400; margin-top: 0; }
+    p { line-height: 1.65; }
+    .intro { max-width: 55ch; font-size: 20px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 28px 0 36px; }
+    a { color: #3ecfcf; text-underline-offset: .22em; }
+    .button { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; border: 1px solid #3ecfcf; border-radius: 32px; padding: 12px 22px; color: #f3e6d4; text-decoration: none; }
+    .button:hover { background: #34202a; }
+    a:focus-visible { outline: 3px solid #e4c27a; outline-offset: 5px; }
+    .details { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; padding-top: 28px; border-top: 1px solid #8d8794; }
+    .note { font: 14px/1.7 system-ui, sans-serif; color: #e4c27a; max-width: 65ch; margin-top: 28px; }
+    footer { padding-top: 28px; }
+    footer a { display: inline-flex; align-items: center; min-height: 44px; }
+    @media (max-width: 600px) { .details { grid-template-columns: 1fr; gap: 16px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="meta">saelion.co · kk · interactive vignette</p>
+      <h1>A quiet moment at the well.</h1>
+      <p class="intro">A short walk through a courtyard at dusk. A few lines to read, a few deliberate actions to take, and room to go at your own pace.</p>
+      <p>KK pairs a simple geometric scene with a small, poetic ritual.</p>
+      <nav class="actions" aria-label="Choose how to experience KK">
+        <a class="button" href="/kk">Enter KK</a>
+        <a class="button" href="/kk?mode=text">Choose text mode</a>
+      </nav>
+    </header>
+    <div class="details">
+      <section aria-labelledby="walk-title">
+        <h2 id="walk-title">Walk through the scene</h2>
+        <p>Move with the arrow keys, WASD, or the round touch pad. Follow the action button as its label changes. With the scene focused, E or Space also performs the action.</p>
+      </section>
+      <section aria-labelledby="text-title">
+        <h2 id="text-title">Follow the words</h2>
+        <p>Text mode offers the same ritual through descriptions and labeled buttons, without steering through the scene. You can switch modes during your visit.</p>
+      </section>
+    </div>
+    <p class="note">No account is needed. When browser storage is available, KK saves your place in this browser and offers Continue when you return. You can also begin again. The interactive experience needs JavaScript.</p>
+  </main>
+  <footer><a href="/">Home</a></footer>
+</body>
+</html>
